@@ -74,7 +74,8 @@ git submodule update --init --recursive && sudo apt-get update && sudo apt-get u
     libzstd-dev \
     libgtest-dev \
     lld \
-    clang
+    clang \
+    patchelf
 
 _GET_SRC_DIR()
 {
