@@ -18,6 +18,64 @@
 # [
 # shellcheck disable=SC1007,SC2164
 # https://android.googlesource.com/platform/build/+/refs/tags/android-15.0.0_r1/envsetup.sh#18
+
+git submodule update --init --recursive && sudo apt-get update && sudo apt-get upgrade -y && sudo apt-get install -y \
+    build-essential \
+    openjdk-17-jdk \
+    python3 \
+    python3-pip \
+    python3-venv \
+    unzip \
+    zip \
+    zipalign \
+    p7zip-full \
+    wget \
+    curl \
+    git \
+    bc \
+    cpio \
+    libssl-dev \
+    libffi-dev \
+    zlib1g-dev \
+    android-sdk-libsparse-utils \
+    ccache \
+    bc \
+    cpio \
+    repo \
+    git-core \
+    gnupg \
+    flex \
+    bison \
+    build-essential \
+    zip \
+    curl \
+    zlib1g-dev \
+    libc6-dev-i386 \
+    x11proto-core-dev \
+    libx11-dev \
+    lib32z1-dev \
+    libgl1-mesa-dev \
+    libxml2-utils \
+    xsltproc \
+    unzip \
+    fontconfig \
+    brotli \
+    clang \
+    cmake \
+    zstd \
+    attr \
+    golang-go \
+    lz4 \
+    pcre2-utils \
+    protobuf-compiler \
+    libbrotli-dev \
+    liblz4-dev \
+    libpcre2-dev \
+    libzstd-dev \
+    libgtest-dev \
+    lld \
+    clang
+
 _GET_SRC_DIR()
 {
     local TOPFILE="unica/configs/version.sh"
