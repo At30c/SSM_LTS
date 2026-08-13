@@ -106,7 +106,7 @@ READ_BYTES_AT()
 
 # [
 DEPENDENCIES=(
-    "awk" "basename" "bc" "brotli" "cat" "clang" "cmake"
+    "awk" "basename" "bc" "brotli" "cargo" "cat" "clang" "cmake"
     "cp" "curl" "cut" "dd" "dirname" "du" "zip" "zstd"
     "file" "getfattr" "git" "go" "grep" "head" "java" "ln"
     "lz4" "make" "md5sum" "mkdir" "mount" "mv" "pcre2test"

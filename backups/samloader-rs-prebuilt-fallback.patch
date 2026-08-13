@@ -1,0 +1,29 @@
+diff --git a/external/make.sh b/external/make.sh
+index 44513667..957327e2 100755
+--- a/external/make.sh
++++ b/external/make.sh
+@@ -162 +162 @@ SAMLOADER_EXEC=(
+-    "../venv/bin/samloader"
++    "samloader"
+@@ -247,2 +247 @@ if $SAMLOADER; then
+-        "python3 -m venv \"$TOOLS_DIR/venv\""
+-        "source \"$TOOLS_DIR/venv/bin/activate\"; pip3 install ."
++        "case \"$(uname -m)\" in x86_64) SAMLOADER_ARCH=x86_64; SAMLOADER_SHA256=7c6514028f20d5ea0eb57d6f872eee41b3a52336eabac6379b15a01a06ed7a79 ;; aarch64|arm64) SAMLOADER_ARCH=aarch64; SAMLOADER_SHA256=9703e49e944d27dc5ac973492bf706035fe5aadc1b10d3a3a68f33f50d91b977 ;; *) echo \"Unsupported architecture: $(uname -m)\" >&2; exit 1 ;; esac; SAMLOADER_ARCHIVE=\"/tmp/samloader-v2.0.0-linux-\$SAMLOADER_ARCH.tar.xz\"; curl --fail --location --silent --show-error --output \"\$SAMLOADER_ARCHIVE\" \"https://github.com/topjohnwu/samloader-rs/releases/download/2.0.0/samloader-v2.0.0-linux-\$SAMLOADER_ARCH.tar.xz\"; echo \"\$SAMLOADER_SHA256  \$SAMLOADER_ARCHIVE\" | sha256sum --check; tar -xJf \"\$SAMLOADER_ARCHIVE\" -C \"$TOOLS_DIR/bin\"; rm -f \"\$SAMLOADER_ARCHIVE\""
+@@ -251 +250 @@ if $SAMLOADER; then
+-    BUILD "samloader" "$SRC_DIR/external/samloader" "${SAMLOADER_CMDS[@]}"
++    BUILD "samloader" "$SRC_DIR" "${SAMLOADER_CMDS[@]}"
+diff --git a/scripts/download_fw.sh b/scripts/download_fw.sh
+index 2f6436b5..a8960499 100755
+--- a/scripts/download_fw.sh
++++ b/scripts/download_fw.sh
+@@ -172,6 +172,4 @@ for i in "${FIRMWARES[@]}"; do
+-        # shellcheck disable=SC2164
+-        # Anan's samloader stores its logs in the current working directory, let's move into OUT_DIR just for this time
+-        (
+-        cd "$OUT_DIR"
+-        samloader -m "$MODEL" -r "$CSC" -i "$IMEI" -s "$SERIAL_NO" download -O "$ODIN_DIR/${MODEL}_${CSC}" 1> /dev/null || exit 1
+-        )
++        "$TOOLS_DIR/bin/samloader" download \
++            --model "$MODEL" \
++            --region "$CSC" \
++            --out-dir "$ODIN_DIR/${MODEL}_${CSC}" || exit 1

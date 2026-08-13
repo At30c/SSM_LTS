@@ -14,10 +14,6 @@
 	path = external/img2sdat
 	url = https://github.com/salvogiangri/img2sdat.git
 	ignore = dirty
-[submodule "external/samloader"]
-	path = external/samloader
-	url = https://github.com/ananjaser1211/samloader.git
-	ignore = dirty
 [submodule "external/signapk"]
 	path = external/signapk
 	url = https://github.com/salvogiangri/signapk.git
@@ -30,3 +26,6 @@
 	path = external/omcdecoder
 	url = https://github.com/soulr344/OMCDecoder
 	ignore = dirty
+[submodule "external/samloader-rs"]
+	path = external/samloader-rs
+	url = https://github.com/topjohnwu/samloader-rs.git

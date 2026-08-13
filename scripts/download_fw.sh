@@ -18,7 +18,6 @@
 
 # [
 source "$SRC_DIR/scripts/utils/firmware_utils.sh" || exit 1
-source "$TOOLS_DIR/venv/bin/activate" || exit 1
 
 FORCE=false
 
@@ -28,6 +27,8 @@ CSC=""
 IMEI=""
 SERIAL_NO=""
 LATEST_FIRMWARE=""
+DOWNLOAD_FIRMWARE=""
+REQUESTED_FIRMWARE=""
 ZIP_FILE=""
 
 PREPARE_SCRIPT()
@@ -39,6 +40,14 @@ PREPARE_SCRIPT()
     while [ "$#" != 0 ]; do
         if [[ "$1" == "--force" ]] || [[ "$1" == "-f" ]]; then
             FORCE=true
+        elif [[ "$1" == "--version" ]]; then
+            shift
+            if [ -z "$1" ] || [[ "$1" == "-"* ]]; then
+                LOGE "--version requires a firmware version"
+                PRINT_USAGE
+                exit 1
+            fi
+            REQUESTED_FIRMWARE="$1"
         elif [[ "$1" == "--ignore-source" ]]; then
             IGNORE_SOURCE=true
         elif [[ "$1" == "--ignore-target" ]]; then
@@ -75,6 +84,11 @@ PREPARE_SCRIPT()
     if [ "${#EXTRA_FIRMWARES[@]}" -ge 1 ]; then
         FIRMWARES+=("${EXTRA_FIRMWARES[@]}")
     fi
+
+    if [ -n "$REQUESTED_FIRMWARE" ] && [ "${#FIRMWARES[@]}" -ne 1 ]; then
+        LOGE "--version can only be used when downloading one firmware"
+        exit 1
+    fi
 }
 
 PRINT_USAGE()
@@ -83,6 +97,7 @@ PRINT_USAGE()
     echo " --ignore-source : Skip parsing source firmware flags" >&2
     echo " --ignore-target : Skip parsing target firmware flags" >&2
     echo " -f, --force : Force firmware download" >&2
+    echo " --version <PDA/CSC/CP> : Download a specific firmware version" >&2
 }
 
 VERIFY_ODIN_PACKAGES()
@@ -127,23 +142,34 @@ PREPARE_SCRIPT "$@"
 for i in "${FIRMWARES[@]}"; do
     PARSE_FIRMWARE_STRING "$i" || exit 1
 
+    CONFIGURED_FIRMWARE=""
+    if [ "$i" == "$SOURCE_FIRMWARE" ]; then
+        CONFIGURED_FIRMWARE="$SOURCE_FIRMWARE_VERSION"
+    elif [ "$i" == "$TARGET_FIRMWARE" ]; then
+        CONFIGURED_FIRMWARE="$TARGET_FIRMWARE_VERSION"
+    fi
+
     LATEST_FIRMWARE="$(GET_LATEST_FIRMWARE "$MODEL" "$CSC")"
-    if [ ! "$LATEST_FIRMWARE" ]; then
+    if [ ! "$LATEST_FIRMWARE" ] && [ -z "$REQUESTED_FIRMWARE" ] && [ -z "$CONFIGURED_FIRMWARE" ]; then
         LOGE "Latest available firmware could not be fetched"
         exit 1
     fi
+
+    DOWNLOAD_FIRMWARE="${REQUESTED_FIRMWARE:-${CONFIGURED_FIRMWARE:-$LATEST_FIRMWARE}}"
 
     LOG_STEP_IN "- Processing $MODEL firmware with $CSC CSC"
     LOG "- Downloaded firmware: $(cat "$ODIN_DIR/${MODEL}_${CSC}/.downloaded" 2> /dev/null)"
     LOG "- Extracted firmware: $(cat "$FW_DIR/${MODEL}_${CSC}/.extracted" 2> /dev/null)"
     LOG "- Latest available firmware: $LATEST_FIRMWARE"
+    [ -n "$CONFIGURED_FIRMWARE" ] && LOG "- Configured firmware: $CONFIGURED_FIRMWARE"
+    [ -n "$REQUESTED_FIRMWARE" ] && LOG "- Requested firmware: $REQUESTED_FIRMWARE"
 
     LOG_STEP_IN
 
     if ! $FORCE; then
         # Skip if firmware has been extracted and equal/newer than the one in FUS
         if [ -f "$FW_DIR/${MODEL}_${CSC}/.extracted" ]; then
-            if COMPARE_SEC_BUILD_VERSION "$(cat "$FW_DIR/${MODEL}_${CSC}/.extracted")" "$LATEST_FIRMWARE"; then
+            if COMPARE_SEC_BUILD_VERSION "$(cat "$FW_DIR/${MODEL}_${CSC}/.extracted")" "$DOWNLOAD_FIRMWARE"; then
                 LOG "\033[0;33m! This firmware has already been extracted, skipping\033[0m"
                 LOG_STEP_OUT; LOG_STEP_OUT
                 continue
@@ -152,7 +178,7 @@ for i in "${FIRMWARES[@]}"; do
 
         # Skip if firmware has already been downloaded
         if [ -f "$ODIN_DIR/${MODEL}_${CSC}/.downloaded" ]; then
-            if ! COMPARE_SEC_BUILD_VERSION "$(cat "$ODIN_DIR/${MODEL}_${CSC}/.downloaded")" "$LATEST_FIRMWARE"; then
+            if ! COMPARE_SEC_BUILD_VERSION "$(cat "$ODIN_DIR/${MODEL}_${CSC}/.downloaded")" "$DOWNLOAD_FIRMWARE"; then
                 LOG "\033[0;33m! A newer firmware is available for download, use --force flag if you want to overwrite it\033[0m"
             else
                 LOG "\033[0;33m! This firmware has already been downloaded\033[0m"
@@ -165,18 +191,18 @@ for i in "${FIRMWARES[@]}"; do
     LOG "- Downloading firmware..."
     [ -f "$ODIN_DIR/${MODEL}_${CSC}/.downloaded" ] && rm -rf "$ODIN_DIR/${MODEL}_${CSC}"
     mkdir -p "$ODIN_DIR/${MODEL}_${CSC}"
+    find "$ODIN_DIR/${MODEL}_${CSC}" -maxdepth 1 -type f -name "*.zip" -delete
 
     COUNT=1
     # Loop infinetely until download succeeds
     while true; do
-        # shellcheck disable=SC2164
-        # Anan's samloader stores its logs in the current working directory, let's move into OUT_DIR just for this time
-        (
-        cd "$OUT_DIR"
-        samloader -m "$MODEL" -r "$CSC" -i "$IMEI" -s "$SERIAL_NO" download -O "$ODIN_DIR/${MODEL}_${CSC}" 1> /dev/null || exit 1
-        )
+        "$TOOLS_DIR/bin/samloader" download \
+            --model "$MODEL" \
+            --region "$CSC" \
+            --version "$DOWNLOAD_FIRMWARE" \
+            --out-dir "$ODIN_DIR/${MODEL}_${CSC}" || exit 1
 
-        ZIP_FILE="$(find "$ODIN_DIR/${MODEL}_${CSC}" -name "*.zip" | sort -r | head -n 1)"
+        ZIP_FILE="$(find "$ODIN_DIR/${MODEL}_${CSC}" -maxdepth 1 -type f -name "*.zip" | head -n 1)"
         if [ ! "$ZIP_FILE" ] || [ ! -f "$ZIP_FILE" ]; then
             if [ $COUNT -gt 10 ]; then
                 LOGW "\033[0;31m! Download failed, check your network connection or device IMEI!\033[0m"
@@ -196,11 +222,9 @@ for i in "${FIRMWARES[@]}"; do
 
     VERIFY_ODIN_PACKAGES
 
-    echo -n "$LATEST_FIRMWARE" > "$ODIN_DIR/${MODEL}_${CSC}/.downloaded"
+    echo -n "$DOWNLOAD_FIRMWARE" > "$ODIN_DIR/${MODEL}_${CSC}/.downloaded"
 
     LOG_STEP_OUT; LOG_STEP_OUT
 done
-
-deactivate
 
 exit 0

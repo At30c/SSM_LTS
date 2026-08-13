@@ -30,8 +30,9 @@ else
     echo "Your need indentify for git and repo. Please enter your git email and name when prompted."
     sleep 4
     clear
-    git submodule update --init --recursive && sudo apt-get update && sudo apt-get upgrade -y && sudo apt-get install -y \
+    git submodule update --init --recursive --force && sudo apt-get update && sudo apt-get upgrade -y && sudo apt-get install -y \
         build-essential \
+        cargo \
         openjdk-17-jdk \
         python3 \
         python3-pip \
@@ -53,6 +54,7 @@ else
         bc \
         cpio \
         repo \
+        rustc \
         git-core \
         gnupg \
         flex \
