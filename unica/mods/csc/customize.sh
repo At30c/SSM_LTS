@@ -1,3 +1,7 @@
+# Do not inject this module's bundled CSC payload. The target firmware's CSC
+# is copied below instead, then only the tweaks in this script are applied.
+SKIPUNZIP=1
+
 # SET_CSC_FEATURE_CONFIG "<config>" "<value>"
 # Sets the supplied config to the desidered value.
 # "-d" or "--delete" can be passed as value to delete the config.
@@ -22,10 +26,92 @@ SET_CSC_FEATURE_CONFIG()
     return 0
 }
 
-LOG "- Patching CSC model"
-SOURCE_MODEL=$(echo -n "$SOURCE_FIRMWARE" | cut -d "/" -f 1)
 TARGET_MODEL=$(echo -n "$TARGET_FIRMWARE" | cut -d "/" -f 1)
-find "$WORK_DIR/optics" -type f -exec sed -i "s/SAOMC_SM-S938B/SAOMC_${TARGET_MODEL}/g" {} +
+TARGET_REGION=$(echo -n "$TARGET_FIRMWARE" | cut -d "/" -f 2)
+TARGET_CSC_DIR="$FW_DIR/${TARGET_MODEL}_${TARGET_REGION}"
+
+LOG_STEP_IN "- Using target firmware CSC"
+for PARTITION in optics prism; do
+    if [ ! -d "$TARGET_CSC_DIR/$PARTITION" ]; then
+        LOGE "Target CSC partition not found: /$PARTITION"
+        exit 1
+    fi
+
+    LOG "- Copying /$PARTITION from target firmware"
+    if [[ "$PARTITION" == "prism" ]]; then
+        # Debloat runs before modules. Do not reintroduce the target CSC's
+        # carrier/preload packages after unica/patches/debloat removes them.
+        EVAL "rsync -a --delete --delete-excluded --exclude='/app/' --exclude='/preload/' --exclude='/priv-app/' \"$TARGET_CSC_DIR/$PARTITION/\" \"$WORK_DIR/$PARTITION/\"" || exit 1
+    else
+        # optics/configs contains the cscfeature.xml files patched below.
+        EVAL "rsync -a --delete \"$TARGET_CSC_DIR/$PARTITION/\" \"$WORK_DIR/$PARTITION/\"" || exit 1
+    fi
+    EVAL "cp -a \"$TARGET_CSC_DIR/file_context-$PARTITION\" \"$WORK_DIR/configs/file_context-$PARTITION\"" || exit 1
+    EVAL "cp -a \"$TARGET_CSC_DIR/fs_config-$PARTITION\" \"$WORK_DIR/configs/fs_config-$PARTITION\"" || exit 1
+done
+LOG_STEP_OUT
+
+PATCH_DEFAULT_WORKSPACE_HOTSEAT()
+{
+    local FILE="$1"
+    local TEMP_FILE
+
+    # Keep the existing workspace intact and replace only the hotseat block.
+    # Some carrier workspaces have no hotseat, and are intentionally skipped.
+    grep -q '<hotseat>' "$FILE" || return 0
+
+    TEMP_FILE="${FILE}.unica-hotseat"
+    awk '
+        /<hotseat>/ {
+            print "    <hotseat>"
+            print "        <!-- Phone -->"
+            print "        <favorite"
+            print "            screen=\"0\""
+            print "            packageName=\"com.samsung.android.dialer\""
+            print "            className=\"com.samsung.android.dialer.DialtactsActivity\" />"
+            print ""
+            print "        <!-- Messages -->"
+            print "        <favorite"
+            print "            screen=\"1\""
+            print "            packageName=\"com.samsung.android.messaging\""
+            print "            className=\"com.android.mms.ui.ConversationComposer\" />"
+            print ""
+            print "        <!-- Chrome -->"
+            print "        <favorite"
+            print "            screen=\"2\""
+            print "            className=\"com.google.android.apps.chrome.Main\""
+            print "            packageName=\"com.android.chrome\" />"
+            print ""
+            print "        <!-- Camera -->"
+            print "        <favorite"
+            print "            screen=\"3\""
+            print "            packageName=\"com.sec.android.app.camera\""
+            print "            className=\"com.sec.android.app.camera.Camera\" />"
+            print ""
+            print "    </hotseat>"
+            in_hotseat = 1
+            next
+        }
+        in_hotseat && /<\/hotseat>/ {
+            in_hotseat = 0
+            next
+        }
+        !in_hotseat { print }
+    ' "$FILE" > "$TEMP_FILE" || return 1
+
+    chmod --reference="$FILE" "$TEMP_FILE" || return 1
+    mv -f "$TEMP_FILE" "$FILE" || return 1
+}
+
+LOG_STEP_IN "- Patching CSC default workspace"
+HOTSEAT_FILES=0
+while IFS= read -r -d '' FILE; do
+    grep -q '<hotseat>' "$FILE" || continue
+    PATCH_DEFAULT_WORKSPACE_HOTSEAT "$FILE" || exit 1
+    HOTSEAT_FILES=$((HOTSEAT_FILES + 1))
+done < <(find "$WORK_DIR/prism" -type f -name "default_workspace.xml" -print0)
+LOG "- Updated hotseat in $HOTSEAT_FILES CSC workspace file(s)"
+LOG_STEP_OUT
 
 LOG_STEP_IN "- Patching CSC Features"
 while read -r FILE; do
@@ -55,6 +141,9 @@ done <<< "$(find "$WORK_DIR/optics" -type f -name "cscfeature.xml")"
 # shellcheck disable=SC2046
 wait $(jobs -p) || exit 1
 LOG_STEP_OUT
+
+unset FILE HOTSEAT_FILES
+unset -f PATCH_DEFAULT_WORKSPACE_HOTSEAT
 
 LOG_STEP_IN "- Patching APKs for network speed monitoring"
 
