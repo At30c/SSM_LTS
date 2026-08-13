@@ -76,6 +76,6 @@ done <<< "$(find "$SRC_DIR/unica/mods" -mindepth 1 -maxdepth 1 -type d)"
 while read -r i; do
     ((MODULES_COUNT+=1))
     PRINT_MODULE_INFO "$i"
-done <<< "$(find "$SRC_DIR/target/$TARGET_CODENAME/patches" -mindepth 1 -maxdepth 1 -type d)"
+done <<< "$(find "$SRC_DIR/target/$TARGET_ASSET_PROFILE/patches" -mindepth 1 -maxdepth 1 -type d)"
 
 exit 0

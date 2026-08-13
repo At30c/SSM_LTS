@@ -32,10 +32,10 @@ $ROM_IS_OFFICIAL && ROM_STATUS="OFFICIAL"
 ZIP_FILE_SUFFIX="-sign.zip"
 $DEBUG && ! $ROM_IS_OFFICIAL && ZIP_FILE_SUFFIX=".zip"
 
-FILE_NAME="ExtremeROM_${ROM_STATUS}_${ROM_VERSION}_$(date +%Y%m%d)_${TARGET_CODENAME}${ZIP_FILE_SUFFIX}"
+FILE_NAME="ExtremeROM_${ROM_STATUS}_${ROM_VERSION}_$(date +%Y%m%d)_${TARGET_ASSET_PROFILE}${ZIP_FILE_SUFFIX}"
 while [ -f "$OUT_DIR/$FILE_NAME" ]; do
     INCREMENTAL=$((INCREMENTAL + 1))
-    FILE_NAME="ExtremeROM_${ROM_VERSION}_$(date +%Y%m%d)-${INCREMENTAL}_${TARGET_CODENAME}${ZIP_FILE_SUFFIX}"
+    FILE_NAME="ExtremeROM_${ROM_STATUS}_${ROM_VERSION}_$(date +%Y%m%d)-${INCREMENTAL}_${TARGET_ASSET_PROFILE}${ZIP_FILE_SUFFIX}"
 done
 
 PRIVATE_KEY_PATH="$SRC_DIR/security/"
@@ -297,7 +297,7 @@ GENERATE_UPDATER_SCRIPT()
     [ -f "$TMP_DIR/system_dlkm.new.dat${BROTLI_EXTENSION}" ] && HAS_SYSTEM_DLKM=true && PARTITION_COUNT=$((PARTITION_COUNT + 1))
     [ -f "$TMP_DIR/prism.new.dat${BROTLI_EXTENSION}" ] && HAS_PRISM=true
     [ -f "$TMP_DIR/optics.new.dat${BROTLI_EXTENSION}" ] && HAS_OPTICS=true
-    [ -f "$SRC_DIR/target/$TARGET_CODENAME/postinstall.edify" ] && HAS_POST_INSTALL=true
+    [ -f "$SRC_DIR/target/$TARGET_ASSET_PROFILE/postinstall.edify" ] && HAS_POST_INSTALL=true
 
     {
         if [ -n "$TARGET_ASSERT_MODEL" ]; then
@@ -546,7 +546,7 @@ GENERATE_UPDATER_SCRIPT()
         if $HAS_POST_INSTALL; then
             echo -e "\n"
             echo    'ui_print("Executing post-install tasks...");'
-            cat "$SRC_DIR/target/$TARGET_CODENAME/postinstall.edify"
+            cat "$SRC_DIR/target/$TARGET_ASSET_PROFILE/postinstall.edify"
         fi
 
         echo -e "\n"

@@ -1,29 +1,21 @@
 #
-# Copyright (C) 2024 BlackMesa123
+# Copyright (C) 2026 Salvo Giangreco
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#
 
-# Device configuration file for Galaxy S20+ (Exynos) (y2s)
-TARGET_NAME="Galaxy S20+ (Exynos)"
+# Device configuration file for Galaxy S20+ 4G (Exynos) (y2s)
+TARGET_NAME="Galaxy S20+ 4G (Exynos)"
 TARGET_CODENAME="y2s"
-TARGET_ASSET_PROFILE="y2s"
-TARGET_ASSERT_MODEL=("SM-G986B")
+TARGET_ASSET_PROFILE="y2s4g"
+TARGET_ASSERT_MODEL=("SM-G985F")
 TARGET_PLATFORM="exynos990"
-TARGET_FIRMWARE="SM-G986B/AUT/359847106775324"
-# Leave empty to download the latest available target firmware.
-TARGET_FIRMWARE_VERSION="G986BXXSNHXL1/G986BOXMNHXL1/G986BXXSNHXL1"
+TARGET_FIRMWARE="SM-G985F/ZTO/359847106775324"
+# Leave empty to download the latest available G985F/ZTO firmware.
+TARGET_FIRMWARE_VERSION="G985FXXSNHXL1/G985FOWONHXL1/G985FXXSNHXL1"
 TARGET_EXTRA_FIRMWARES=("")
 TARGET_API_LEVEL=33
 TARGET_PRODUCT_FIRST_API_LEVEL=29
@@ -38,7 +30,7 @@ TARGET_HAS_SYSTEM_EXT=false
 # SEC Product Feature
 TARGET_AUTO_BRIGHTNESS_TYPE="4"
 TARGET_DVFS_CONFIG_NAME="dvfs_policy_exynos990_xx"
-TARGET_FCC_ID="A3LSMG986B"
+TARGET_FCC_ID="A3LSMG985F"
 TARGET_NFC_CHIP_VENDOR="SLSI"
 TARGET_FP_SENSOR_CONFIG="google_touch_display_ultrasonic"
 TARGET_HAS_MASS_CAMERA_APP=false

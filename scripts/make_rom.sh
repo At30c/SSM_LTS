@@ -32,7 +32,7 @@ TARGET_FIRMWARE_PATH="$(cut -d "/" -f 1 -s <<< "$TARGET_FIRMWARE")_$(cut -d "/" 
 
 GET_WORK_DIR_HASH()
 {
-    find "$SRC_DIR/unica" "$SRC_DIR/target/$TARGET_CODENAME" -type f -print0 | \
+    find "$SRC_DIR/unica" "$SRC_DIR/target/$TARGET_ASSET_PROFILE" -type f -print0 | \
         sort -z | xargs -0 sha1sum | sha1sum | cut -d " " -f 1
 }
 
@@ -134,9 +134,9 @@ if $BUILD_ROM; then
         "$SRC_DIR/scripts/internal/apply_modules.sh" "$SRC_DIR/platform/$TARGET_PLATFORM/patches" || exit 1
         LOG_STEP_OUT
     fi
-    if [ -d "$SRC_DIR/target/$TARGET_CODENAME/patches" ]; then
+    if [ -d "$SRC_DIR/target/$TARGET_ASSET_PROFILE/patches" ]; then
         LOG_STEP_IN true "Applying device patches"
-        "$SRC_DIR/scripts/internal/apply_modules.sh" "$SRC_DIR/target/$TARGET_CODENAME/patches" || exit 1
+        "$SRC_DIR/scripts/internal/apply_modules.sh" "$SRC_DIR/target/$TARGET_ASSET_PROFILE/patches" || exit 1
         LOG_STEP_OUT
     fi
 

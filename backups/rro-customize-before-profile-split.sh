@@ -1,3 +1,5 @@
+# Backup of unica/patches/rro/customize.sh before adding target asset profiles.
+
 SOURCE_MODEL="$(echo -n "$SOURCE_FIRMWARE" | cut -d "/" -f 1)"
 SOURCE_REGION="$(echo -n "$SOURCE_FIRMWARE" | cut -d "/" -f 2)"
 CUSTOM_SYSTEM_NAME="$(GET_PROP "$FW_DIR/${SOURCE_MODEL}_${SOURCE_REGION}/system/system/build.prop" "ro.product.system.name")"
@@ -23,13 +25,13 @@ RENAME_RRO()
         "$WORK_DIR/configs/file_context-product"
 }
 
-if [[ -d "$SRC_DIR/target/$TARGET_ASSET_PROFILE/overlay" ]]; then
+if [[ -d "$SRC_DIR/target/$TARGET_CODENAME/overlay" ]]; then
     DECODE_APK "product" "overlay/framework-res__${CUSTOM_SYSTEM_NAME}__auto_generated_rro_product.apk"
 
     LOG "- Applying stock overlay configs"
     rm -rf "$APKTOOL_DIR/product/overlay/framework-res__${CUSTOM_SYSTEM_NAME}__auto_generated_rro_product.apk/res"
     cp -a --preserve=all \
-        "$SRC_DIR/target/$TARGET_ASSET_PROFILE/overlay" \
+        "$SRC_DIR/target/$TARGET_CODENAME/overlay" \
         "$APKTOOL_DIR/product/overlay/framework-res__${CUSTOM_SYSTEM_NAME}__auto_generated_rro_product.apk/res"
 fi
 
@@ -40,7 +42,7 @@ rm "$APKTOOL_DIR/product/overlay/SystemUI__${CUSTOM_SYSTEM_NAME}__auto_generated
 rm "$APKTOOL_DIR/product/overlay/SystemUI__${CUSTOM_SYSTEM_NAME}__auto_generated_rro_product.apk/res/values/public.xml"
 rm "$APKTOOL_DIR/product/overlay/SystemUI__${CUSTOM_SYSTEM_NAME}__auto_generated_rro_product.apk/res/drawable/rounded.xml"
 
-[[ -d "$SRC_DIR/target/$TARGET_ASSET_PROFILE/overlay" ]] && RENAME_RRO "framework-res"
+[[ -d "$SRC_DIR/target/$TARGET_CODENAME/overlay" ]] && RENAME_RRO "framework-res"
 RENAME_RRO "SystemUI"
 
 unset SOURCE_MODEL SOURCE_REGION CUSTOM_SYSTEM_NAME TARGET_SYSTEM_NAME
