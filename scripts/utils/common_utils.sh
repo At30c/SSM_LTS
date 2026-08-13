@@ -501,8 +501,12 @@ GET_PROP()
     _CHECK_NON_EMPTY_PARAM "PROP" "$1" || return 1
 
     local PROP="$1"
-    # shellcheck disable=SC2086
-    cat $FILES 2> /dev/null | sed -n "s/^$PROP=//p" | head -n 1
+    # Compare the key literally. Property names contain dots, which are regex
+    # wildcards in sed/grep and can otherwise make one prop match another.
+    while IFS= read -r f; do
+        [ -f "$f" ] || continue
+        awk -v prop="$PROP" 'index($0, prop "=") == 1 { print substr($0, length(prop) + 2); exit }' "$f"
+    done <<< "$FILES" | head -n 1
 }
 
 # IS_SPARSE_IMAGE <file>

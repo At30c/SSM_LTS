@@ -32,7 +32,7 @@ _GET_PROP_LOCATION()
     local PROP="$1"
     local MATCHES=()
     while IFS= read -r f; do
-        if grep -q "^$PROP=" "$f" 2> /dev/null; then
+        if awk -v prop="$PROP" 'index($0, prop "=") == 1 { found = 1; exit } END { exit !found }' "$f" 2> /dev/null; then
             MATCHES+=("$f")
         fi
     done <<< "$FILES"
@@ -249,6 +249,7 @@ SET_PROP()
     local PARTITION="$1"
     local PROP="$2"
     local VALUE="$3"
+    local PROP_REGEX="${PROP//./\\.}"
 
     if ! IS_VALID_PARTITION_NAME "$PARTITION"; then
         LOGE "\"$PARTITION\" is not a valid partition name"
@@ -262,12 +263,12 @@ SET_PROP()
         while IFS= read -r f; do
             if [[ "$VALUE" == "-d" ]] || [[ "$VALUE" == "--delete" ]]; then
                 LOG "- Deleting \"$PROP\" prop in ${f//$WORK_DIR/}"
-                sed -i "/^$PROP/d" "$f"
+                sed -i "/^$PROP_REGEX=/d" "$f"
             else
                 LOG "- Replacing \"$PROP\" prop with \"$VALUE\" in ${f//$WORK_DIR/}"
 
                 local LINES
-                LINES="$(sed -n "/^${PROP}\b/=" "$f")"
+                LINES="$(sed -n "/^${PROP_REGEX}=/=" "$f")"
                 for l in $LINES; do
                     sed -i "$l c${PROP}=${VALUE}" "$f"
                 done
