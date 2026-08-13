@@ -20,7 +20,11 @@
 source "$SRC_DIR/scripts/utils/build_utils.sh" || exit 1
 
 FRAMEWORK_DIR="$TOOLS_DIR/apktool/framework"
-FRAMEWORK_TAG="$(GET_PROP "system" "ro.build.version.incremental")"
+# APKs come from the source/custom firmware. Its framework tag must remain in
+# use even when a patch changes ro.build.version.incremental to the target one.
+SOURCE_FIRMWARE_PATH="$(cut -d "/" -f 1-2 -s <<< "$SOURCE_FIRMWARE" | tr "/" "_")"
+FRAMEWORK_TAG="$(GET_PROP "$FW_DIR/$SOURCE_FIRMWARE_PATH/system/system/build.prop" "ro.build.version.incremental")"
+[ -n "$FRAMEWORK_TAG" ] || FRAMEWORK_TAG="$(GET_PROP "system" "ro.build.version.incremental")"
 
 FORCE=false
 PARTITION=""
