@@ -50,10 +50,6 @@ etc/init/vendor_flash_recovery.rc
 
 # Apps debloat
 PRODUCT_DEBLOAT+="
-app/Chrome64
-app/Duo
-app/Gmail2
-app/Maps
 app/YouTube
 overlay/GmsConfigOverlaySearchSelector.apk
 priv-app/Messages
@@ -158,11 +154,8 @@ system/priv-app/YourPhone_P1_5
 
 PRISM_DEBLOAT+="
 app
-etc
-HWRDB
 preload
 priv-app
-sipdb
 "
 
 OPTICS_DEBLOAT+="

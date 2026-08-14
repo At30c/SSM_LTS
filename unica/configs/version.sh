@@ -17,10 +17,10 @@
 
 VERSION_MAJOR=2
 VERSION_MINOR=6
-VERSION_PATCH=2
+VERSION_PATCH=3
 
 ROM_VERSION="${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}"
 # Append current commit hash to version name
 ROM_VERSION+="-$(git rev-parse --short HEAD)"
 
-ROM_CODENAME="Nexus"
+ROM_CODENAME="Zonks"
