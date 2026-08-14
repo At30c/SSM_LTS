@@ -65,7 +65,6 @@ system/app/FBAppManager_NS
 system/app/KidsHome_Installer
 system/app/MAPSAgent
 system/app/MDMApp
-system/app/PlayAutoInstallConfig
 system/app/Rampart
 system/app/SamsungPassAutofill_v1
 system/app/SamsungTTSVoice_ar_AE_m00
@@ -97,7 +96,6 @@ system/etc/permissions/com.samsung.feature.samsungpositioning.xml
 system/etc/permissions/org.carconnectivity.android.digitalkey.rangingintent.xml
 system/etc/permissions/org.carconnectivity.android.digitalkey.secureelement.xml
 system/etc/permissions/privapp-permissions-com.microsoft.skydrive.xml
-system/etc/permissions/privapp-permissions-com.samsung.android.app.updatecenter.xml
 system/etc/permissions/privapp-permissions-com.samsung.android.authfw.xml
 system/etc/permissions/privapp-permissions-com.samsung.android.carkey.xml
 system/etc/permissions/privapp-permissions-com.samsung.android.dkey.xml
@@ -124,7 +122,6 @@ system/etc/sysconfig/samsungpassapp.xml
 system/etc/sysconfig/samsungpushservice.xml
 system/hidden/SmartTutor
 system/preload/Facebook_stub_preload
-system/priv-app/AppUpdateCenter
 system/priv-app/AREmoji
 system/priv-app/AREmojiEditor
 system/priv-app/AuthFramework
@@ -139,7 +136,6 @@ system/priv-app/FotaAgent
 system/priv-app/ImsLogger
 system/priv-app/IpsGeofence
 system/priv-app/OdaService
-system/priv-app/OMCAgent5
 system/priv-app/OneDrive_Samsung_v3
 system/priv-app/PaymentFramework
 system/priv-app/SamsungCarKeyFw
