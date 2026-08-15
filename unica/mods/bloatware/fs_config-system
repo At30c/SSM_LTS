@@ -1,0 +1,5 @@
+system/system 0 0 755 capabilities=0x0
+system/app/ClockPackage 0 0 755 capabilities=0x0
+system/app/ClockPackage/ClockPackage.apk 0 0 644 capabilities=0x0
+system/app/SamsungCalendar 0 0 755 capabilities=0x0
+system/app/SamsungCalendar/SamsungCalendar.apk 0 0 644 capabilities=0x0
