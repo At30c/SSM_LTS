@@ -1,10 +1,40 @@
 # [
 EXTREMEKRNL_REPO="https://github.com/ExtremeXT/990_upstream_v2/"
 
+GET_KERNEL_CACHE_KEY()
+{
+    # Include the commit, local source changes, submodules, and build arguments.
+    # This invalidates the cache whenever any input that can affect an image changes.
+    {
+        git -C "$KERNEL_TMP_DIR" rev-parse HEAD
+        git -C "$KERNEL_TMP_DIR" diff --no-ext-diff --binary
+        git -C "$KERNEL_TMP_DIR" diff --cached --no-ext-diff --binary
+        git -C "$KERNEL_TMP_DIR" submodule status --recursive
+        printf 'main: model=%s ksu=y recovery=n\n' "$TARGET_CODENAME"
+        printf 'lte: model=%slte ksu=n recovery=n dtbs=y\n' "$TARGET_CODENAME"
+    } | sha256sum | cut -d " " -f 1
+}
+
+KERNEL_CACHE_IS_VALID()
+{
+    local CACHE_FILE="$KERNEL_TMP_DIR/.unica-kernel-cache-${TARGET_CODENAME}"
+
+    [ -f "$CACHE_FILE" ] || return 1
+    [ "$(cat "$CACHE_FILE")" = "$KERNEL_CACHE_KEY" ] || return 1
+    [ -f "$KERNEL_TMP_DIR/build/out/$TARGET_CODENAME/boot.img" ] || return 1
+    [ -f "$KERNEL_TMP_DIR/build/out/$TARGET_CODENAME/dtbo.img" ] || return 1
+
+    if [[ "$TARGET_CODENAME" != "r8s" ]] && [[ "$TARGET_CODENAME" != "z3s" ]]; then
+        [ -f "$KERNEL_TMP_DIR/build/out/${TARGET_CODENAME}lte/dtbo.img" ] || return 1
+    fi
+
+    return 0
+}
+
 BUILD_KERNEL()
 {
     local PARENT=$(pwd)
-    cd $KERNEL_TMP_DIR
+    cd "$KERNEL_TMP_DIR"
 
     EVAL "./build.sh -m ${TARGET_CODENAME} -k y -r n"
 
@@ -47,6 +77,8 @@ SAFE_PULL_CHANGES()
 REPLACE_KERNEL_BINARIES()
 {
     local KERNEL_TMP_DIR="$KERNEL_TMP_DIR-$TARGET_PLATFORM"
+    local CACHE_FILE="$KERNEL_TMP_DIR/.unica-kernel-cache-${TARGET_CODENAME}"
+    local KERNEL_COMMIT
     [[ ! -d "$KERNEL_TMP_DIR" ]] && mkdir -p "$KERNEL_TMP_DIR"
 
     if [[ -d "$KERNEL_TMP_DIR/.git" ]]; then
@@ -59,17 +91,35 @@ REPLACE_KERNEL_BINARIES()
         EVAL "git clone "$EXTREMEKRNL_REPO" --single-branch "$KERNEL_TMP_DIR" --recurse-submodules"
     fi
 
-    LOG "- Running the kernel build script."
-    BUILD_KERNEL
+    KERNEL_CACHE_KEY="$(GET_KERNEL_CACHE_KEY)" || ABORT "Could not calculate the kernel cache key."
+    KERNEL_COMMIT="$(git -C "$KERNEL_TMP_DIR" rev-parse --short=12 HEAD)" || ABORT "Could not determine the kernel commit."
+
+    if KERNEL_CACHE_IS_VALID; then
+        LOG "- Reusing cached kernel images from $KERNEL_COMMIT."
+    else
+        LOG "- Kernel cache is missing or outdated. Running the kernel build script."
+        BUILD_KERNEL
+
+        [ -f "$KERNEL_TMP_DIR/build/out/$TARGET_CODENAME/boot.img" ] || ABORT "Kernel build did not produce boot.img."
+        [ -f "$KERNEL_TMP_DIR/build/out/$TARGET_CODENAME/dtbo.img" ] || ABORT "Kernel build did not produce dtbo.img."
+        if [[ "$TARGET_CODENAME" != "r8s" ]] && [[ "$TARGET_CODENAME" != "z3s" ]]; then
+            [ -f "$KERNEL_TMP_DIR/build/out/${TARGET_CODENAME}lte/dtbo.img" ] || ABORT "Kernel build did not produce the LTE dtbo.img."
+        fi
+
+        # Some kernel build scripts adjust their source tree while preparing
+        # KernelSU. Record the post-build state used to create these images.
+        KERNEL_CACHE_KEY="$(GET_KERNEL_CACHE_KEY)" || ABORT "Could not update the kernel cache key."
+        printf '%s' "$KERNEL_CACHE_KEY" > "$CACHE_FILE"
+    fi
 
     for i in "boot" "dtbo"; do
         [[ -f "$WORK_DIR/kernel/$i.img" ]] && rm -f "$WORK_DIR/kernel/$i.img"
-        mv -f "$KERNEL_TMP_DIR/build/out/$TARGET_CODENAME/$i.img" "$WORK_DIR/kernel/$i.img"
+        cp -a "$KERNEL_TMP_DIR/build/out/$TARGET_CODENAME/$i.img" "$WORK_DIR/kernel/$i.img"
     done
 
     # And now for the LTE DTBOs
     if [[ "$TARGET_CODENAME" != "r8s" ]] && [[ "$TARGET_CODENAME" != "z3s" ]]; then
-	    mv -f "$KERNEL_TMP_DIR/build/out/${TARGET_CODENAME}lte/dtbo.img" "$WORK_DIR/kernel/dtbo_lte.img"
+        cp -a "$KERNEL_TMP_DIR/build/out/${TARGET_CODENAME}lte/dtbo.img" "$WORK_DIR/kernel/dtbo_lte.img"
     fi
 }
 # ]
