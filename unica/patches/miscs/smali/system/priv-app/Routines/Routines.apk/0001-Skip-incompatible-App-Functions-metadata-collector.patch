@@ -1,0 +1,31 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Codex <noreply@openai.com>
+Date: Fri, 15 Aug 2026 18:23:00 -0300
+Subject: [PATCH] Skip incompatible App Functions metadata collector
+
+On port builds the source App Functions implementation can expose metadata
+that the target framework cannot parse. The exception aborts the complete
+metadata transaction, dropping the legacy Routine SDK and Command SDK actions
+which were already collected. Skip only the optional App Functions collector;
+the normal Routine and Command SDK collectors remain enabled.
+
+---
+ smali_classes4/a4/a.smali | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/smali_classes4/a4/a.smali b/smali_classes4/a4/a.smali
+--- a/smali_classes4/a4/a.smali
++++ b/smali_classes4/a4/a.smali
+@@ -4785,5 +4785,10 @@
+     invoke-interface {p0, v0}, Ljava/util/List;->add(Ljava/lang/Object;)Z
+ 
++    # App Functions metadata is not compatible with the target framework on
++    # port builds. Skip this optional collector so it cannot abort legacy
++    # Routine and Command SDK metadata collection.
++    goto :cond_1
++
+     const-string p0, "SEC_FLOATING_FEATURE_COMMON_CONFIG_AI_VERSION"
+ 
+     const-string v0, "0"
+-- 
+2.50.1
