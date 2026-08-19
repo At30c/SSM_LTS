@@ -1,5 +1,5 @@
 # [
-EXTREMEKRNL_REPO="https://github.com/ExtremeXT/990_upstream_v2/"
+EXTREMEKRNL_REPO="https://github.com/At30c/990_upstream_v2/"
 
 GET_KERNEL_CACHE_KEY()
 {
